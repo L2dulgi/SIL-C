@@ -1,0 +1,10 @@
+{
+    "microwave": "open the microwave door",
+    "kettle": "move the kettle to the top-left burner",
+    "bottom burner": "turn on the bottom-left burner",
+    "top burner": "turn on the top-left burner",
+    "light switch": "turn on the light",
+    "hinge cabinet": "open the hinged cabinet",
+    "slide cabinet": "open the sliding cabinet"
+}
+  

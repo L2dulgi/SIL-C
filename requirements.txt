@@ -1,0 +1,15 @@
+tqdm
+cloudpickle
+einops
+scikit-learn
+matplotlib
+# JAX
+jax[cuda12]==0.4.34
+qax==0.4.1
+jax-lorax==0.3.1
+flax==0.10.2
+wandb==0.19.8
+# EXT
+openai
+pytz
+gdown

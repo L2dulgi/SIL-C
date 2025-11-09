@@ -1,0 +1,24 @@
+tqdm
+cloudpickle
+einops
+scikit-learn
+umap-learn
+matplotlib
+rich
+# torch for DINOv3
+torch==2.8.0
+torchvision==0.23.0
+torchmetrics
+termcolor
+# JAX
+jax[cuda12]==0.8.0
+# qax==0.4.1
+# jax-lorax==0.3.1
+flax==0.10.7
+# transformers
+transformers==4.57.0
+# EXT
+openai
+pytz
+gdown
+h5py

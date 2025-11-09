@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SILGym"
+version = "0.1.0"
+description = "An example project"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{ name = "Your Name", email = "youremail@example.com" }]
+maintainers = [{ name = "Maintainer Name", email = "maintainer@example.com" }]
+keywords = ["example", "SILGym", "sample"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+dependencies = []
+
+[tool.setuptools.dynamic]
+dependencies = { file = "requirements.txt" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests"]
+
+[project.scripts]
+SILGym-cli = "SILGym.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=6.0", "black", "flake8", "mypy", "isort", "tox"]

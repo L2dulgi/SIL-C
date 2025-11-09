@@ -1,0 +1,7 @@
+d4rl==1.1
+mujoco==3.1.1
+mujoco-py==2.1.2.14  
+cython<3  
+opencv-python
+matplotlib
+# gym==0.25.1

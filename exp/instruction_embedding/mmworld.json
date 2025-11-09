@@ -1,0 +1,10 @@
+{
+    "puck":   "push the puck to the goal",
+    "box":    "close the box",
+    "handle": "push the handle",
+    "drawer": "close the drawer",
+    "button": "push the button",
+    "lever":  "pull the lever",
+    "door":   "open the door",
+    "stick":  "insert the stick"
+  }

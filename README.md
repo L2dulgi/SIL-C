@@ -9,6 +9,8 @@ Official implementation of **SIL-C** (Skill Incremental Learning with Compatibil
 
 \# Skill Incremental Learning \# skill-policy compatibility  \# NeurIPS 2025 Spotlight
 
+[[Poster](https://neurips.cc/virtual/2025/loc/san-diego/poster/115210)]
+
 ---
 
 ## Overview

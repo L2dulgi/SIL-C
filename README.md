@@ -351,22 +351,6 @@ This aggregates metrics across runs and reports:
 
 ## Development
 
-### Running Tests
-
-```bash
-# All tests
-pytest devtest
-
-# Smoke tests only
-pytest devtest -k smoke
-
-# Trainer tests
-pytest devtest -k trainer
-
-# Specific test
-pytest devtest/test_trainer.py::test_ptgm_kitchen_debug
-```
-
 ### Code Structure
 
 The codebase follows a modular architecture:

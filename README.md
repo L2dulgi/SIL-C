@@ -9,8 +9,8 @@ Official implementation of **SIL-C** (Skill Incremental Learning with Compatibil
 
 \# Skill Incremental Learning \# skill-policy compatibility  \# NeurIPS 2025 Spotlight
 
-[[Poster](https://neurips.cc/virtual/2025/loc/san-diego/poster/115210)]
 
+> ### See how it works (Demo page) : [https://l2dulgi.github.io/SIL-C/] Poster : [[link](https://neurips.cc/virtual/2025/loc/san-diego/poster/115210)]
 ---
 
 ## Overview
@@ -20,6 +20,7 @@ Official implementation of **SIL-C** (Skill Incremental Learning with Compatibil
 </p>
 
 SIL-C addresses a critical challenge in skill incremental learning: as agents acquire new skills, improvements to these skills can disrupt compatibility with existing task policies, limiting their reusability across diverse data streams. The framework employs a **bilateral lazy learning interface** to dynamically align subtask spaces with skill spaces without requiring policy retraining, enabling continuous skill refinement while maintaining seamless integration with existing policies.
+
 
 
 ### Method

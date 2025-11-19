@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIL-C: Policy Compatible Skill Incremental Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFCF8; /* Warm off-white */
+            color: #1c1917; /* Stone-900 */
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Math Style */
+        .math {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+        .math-sub {
+            font-size: 0.7em;
+            vertical-align: sub;
+        }
+
+        /* Node Styles */
+        .node {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            border: 1px solid #e7e5e4; /* Stone-200 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .node:hover {
+            transform: translateY(-2px);
+            border-color: #059669; /* Emerald-600 */
+            box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.1);
+        }
+        
+        .skill-card { 
+            transition: all 0.5s ease; 
+            background: white;
+            border: 1px solid #e7e5e4;
+        }
+        .skill-new {
+            animation: slideIn 0.5s ease-out forwards;
+            border: 1px dashed #10b981; /* Emerald-500 */
+            background-color: #ecfdf5; /* Emerald-50 */
+        }
+        .skill-ai {
+            animation: slideIn 0.5s ease-out forwards;
+            border: 1px solid #d97706; /* Amber-600 */
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.15);
+            background-color: #fffbeb; /* Amber-50 */
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* States */
+        .validating {
+            box-shadow: 0 0 0 2px #fbbf24; /* Amber-400 ring */
+            border-color: #f59e0b !important; /* Amber-500 */
+            background-color: #fff7ed !important; /* Orange-50 */
+        }
+        .rejected {
+            opacity: 0.5;
+            transform: scale(0.98);
+            filter: grayscale(0.6);
+            background-color: #f5f5f4 !important; /* Stone-100 */
+        }
+        .hooked {
+            border-color: #059669 !important; /* Emerald-600 */
+            box-shadow: 0 0 20px rgba(5, 150, 105, 0.2);
+            transform: scale(1.03);
+            background-color: #f0fdf4 !important; /* Emerald-50 */
+        }
+
+        /* Step Indicators */
+        .step-card { transition: all 0.3s; background: white; cursor: pointer; }
+        .step-card:hover {
+            border-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .step-pending { border-color: #d6d3d1; opacity: 0.6; color: #78716c; }
+        .step-running { 
+            border-color: #d97706; /* Amber-600 */
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2); 
+            opacity: 1; 
+            transform: scale(1.05); 
+            background-color: #fffbeb;
+        }
+        .step-success { 
+            border-color: #059669; 
+            background-color: #ecfdf5; 
+            opacity: 1; 
+            color: #064e3b;
+        }
+        .step-fail { 
+            border-color: #ef4444; 
+            background-color: #fef2f2; 
+            opacity: 1; 
+            color: #991b1b;
+        }
+
+        /* Lines */
+        .probe-line {
+            stroke-dasharray: 5;
+            opacity: 0.6;
+            animation: flow 1s linear infinite;
+        }
+        @keyframes flow { to { stroke-dashoffset: -10; } }
+
+        /* Modal */
+        .modal-overlay {
+            background-color: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+    </style>
+</head>
+<body class="antialiased selection:bg-emerald-200 selection:text-emerald-900">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 top-0 bg-white/90 backdrop-blur-md border-b border-stone-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-200">
+                    <i data-lucide="layers" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight text-stone-800">SIL-C <span class="text-stone-400 text-sm font-normal ml-1 font-serif italic">Visualizer</span></span>
+            </div>
+            <div class="flex gap-3">
+                 <div class="hidden md:flex items-center px-3 py-1 bg-stone-50 rounded-full border border-stone-200">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                    <span class="text-xs text-stone-500 font-medium">Gemini API Enabled</span>
+                </div>
+                <a href="https://arxiv.org/abs/2509.20612" target="_blank" class="text-xs font-bold bg-stone-900 hover:bg-stone-700 text-white px-4 py-2 rounded-full transition flex items-center gap-2 shadow-md">
+                    <span>NeurIPS 2025</span>
+                    <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Demo Section -->
+    <section id="demo" class="pt-28 pb-20 min-h-screen flex flex-col relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-grow flex flex-col">
+            
+            <!-- Header -->
+            <div class="text-center mb-10">
+                <h1 class="text-3xl md:text-5xl font-black text-stone-900 mb-3 tracking-tight">
+                    Lazy Learning Interface
+                </h1>
+                <p class="text-base md:text-lg text-stone-500 font-light mb-6">
+                    Mapping <span class="font-bold text-emerald-600">High-level Subtask Space (<span class="math">𝒳<span class="math-sub">h</span></span>)</span> 
+                    to <span class="font-bold text-amber-600">Low-level Skill Space (<span class="math">𝒳<span class="math-sub">l</span></span>)</span>.
+                </p>
+                
+                <!-- Usage Instruction -->
+                <div class="inline-flex flex-col md:flex-row items-center gap-2 bg-white border border-stone-200 px-5 py-3 rounded-xl shadow-sm text-sm text-stone-600 max-w-3xl mx-auto">
+                    <div class="flex items-center gap-2 font-bold text-stone-800 whitespace-nowrap">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-500"></i>
+                        <span>How to use:</span>
+                    </div>
+                    <span class="hidden md:inline text-stone-300">|</span>
+                    <p>
+                        Click a <strong class="text-emerald-600">Subtask</strong> or <strong class="text-stone-800">Policy Step</strong> to check matching. 
+                        Switch to <strong class="text-amber-600">Phase 2</strong> to see how new skills improve the policy <span class="math">π<span class="math-sub">h</span></span>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Task Runner Panel -->
+            <div class="bg-white border border-stone-200 rounded-2xl p-6 mb-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <!-- Sequence -->
+                    <div class="flex-1 w-full">
+                        <div class="flex items-center gap-2 text-xs font-bold text-stone-400 mb-3 uppercase tracking-wider">
+                            <i data-lucide="list-video" class="w-3 h-3"></i>
+                            <span>Policy <span class="math lowercase text-lg leading-none text-stone-600">π<span class="math-sub">h</span></span> (Click step to verify individually)</span>
+                        </div>
+                        <div class="flex gap-3 overflow-x-auto pb-2" id="task-steps">
+                            <!-- Steps injected by JS -->
+                        </div>
+                    </div>
+                    <!-- Controls -->
+                    <div class="flex gap-3 shrink-0">
+                        <button onclick="runTaskSequence()" id="btn-run-task" class="px-8 py-3 bg-stone-900 hover:bg-stone-700 text-white font-bold rounded-xl shadow-xl shadow-stone-200 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+                            <i data-lucide="play" class="w-4 h-4"></i> Run All
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase Controls -->
+            <div class="flex flex-wrap justify-center mb-8 gap-4">
+                <button onclick="resetSimulation()" class="px-5 py-2.5 rounded-lg bg-white border border-stone-200 text-stone-500 hover:text-stone-800 hover:border-stone-300 transition flex items-center gap-2 font-medium shadow-sm">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+                </button>
+                <div class="bg-white p-1.5 rounded-xl flex gap-2 border border-stone-200 shadow-sm">
+                    <button onclick="setPhase(1)" id="btn-phase-1" class="px-6 py-2 rounded-lg text-sm font-bold transition-all bg-stone-100 text-stone-400">
+                        Phase 1
+                    </button>
+                    <button onclick="setPhase(2)" id="btn-phase-2" class="px-6 py-2 rounded-lg text-sm font-bold transition-all text-stone-400 hover:text-stone-600 flex items-center gap-2">
+                        Phase 2 <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">APPEND</span>
+                    </button>
+                </div>
+                 <button onclick="openSkillCreator()" class="px-6 py-2.5 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-bold shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i> AI Create
+                </button>
+            </div>
+
+            <!-- Workspace with Horizontal Scroll for Mobile -->
+            <div class="w-full overflow-x-auto pb-6">
+                <!-- Min-width set to ensure horizontal layout is preserved on mobile -->
+                <div class="relative bg-white rounded-3xl border border-stone-200 shadow-xl overflow-hidden flex flex-row min-h-[600px] min-w-[1024px]">
+                    
+                    <svg id="connection-layer" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
+
+                    <!-- Left: Subtask Space (X_h) -> GREEN -->
+                    <div class="w-1/4 p-8 border-r border-stone-100 bg-stone-50/30 z-30 flex flex-col gap-4 overflow-y-auto relative">
+                        
+                        <!-- Sticky Header for Subtask Space -->
+                        <div class="flex items-center justify-between mb-4 sticky top-0 bg-white/95 p-4 rounded-xl backdrop-blur-sm z-40 border border-stone-200 shadow-sm">
+                            <div>
+                                <h3 class="font-bold text-stone-800 flex items-center gap-2 text-lg">
+                                    <div class="p-1.5 bg-emerald-100 rounded-md text-emerald-600"><i data-lucide="brain-circuit" class="w-5 h-5"></i></div>
+                                    <span class="math">𝒳<span class="math-sub">h</span></span>
+                                </h3>
+                                <p class="text-[10px] text-stone-500 font-medium mt-0.5">SUBTASK SPACE</p>
+                            </div>
+                            <span class="text-[10px] font-mono text-stone-400 bg-stone-50 px-2 py-1 rounded border border-stone-200">Goal <span class="math text-xs">g</span></span>
+                        </div>
+
+                        <div id="subtask-list" class="space-y-4 pb-10 px-1"></div>
+                    </div>
+
+                    <!-- Center: Scanner / Status -->
+                    <div class="w-1/3 flex flex-col items-center justify-center p-8 z-10 pointer-events-none border-r border-stone-100 bg-white">
+                        <div id="scanner-panel" class="opacity-0 transition-all duration-500 transform translate-y-4 bg-white border border-stone-200 p-6 rounded-2xl w-full max-w-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)]">
+                            <div class="flex justify-between items-center mb-6 border-b border-stone-100 pb-3">
+                                <span class="text-[10px] font-bold text-stone-400 tracking-widest uppercase">Trajectory Distribution Similarity Based Matching</span>
+                                <div id="status-badge" class="px-2.5 py-1 bg-stone-100 text-stone-500 text-[10px] rounded-full font-mono font-bold">IDLE</div>
+                            </div>
+                            
+                            <div class="space-y-5">
+                                <!-- Canvas -->
+                                <div class="relative h-48 bg-stone-50 rounded-xl border border-stone-200 overflow-hidden">
+                                    <canvas id="gaussian-canvas" width="300" height="192" class="w-full h-full"></canvas>
+                                    
+                                    <!-- Valid Overlay -->
+                                    <div id="valid-overlay" class="absolute inset-0 bg-white/90 flex items-center justify-center hidden backdrop-blur-sm">
+                                        <div class="text-center transform scale-110">
+                                            <div class="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-bounce">
+                                                <i data-lucide="check" class="w-8 h-8 text-emerald-600"></i>
+                                            </div>
+                                            <div class="text-xl font-black text-emerald-700">VALID!</div>
+                                            <div class="text-xs text-emerald-600 font-medium mt-1">Cached Skill Found</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Invalid Overlay -->
+                                    <div id="invalid-overlay" class="absolute inset-0 bg-white/90 flex items-center justify-center hidden backdrop-blur-sm">
+                                        <div class="text-center">
+                                            <div class="w-14 h-14 bg-amber-50 border-2 border-amber-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <i data-lucide="alert-triangle" class="w-7 h-7 text-amber-500"></i>
+                                            </div>
+                                            <div class="text-xl font-black text-amber-600">INVALID</div>
+                                            <div id="invalid-reason" class="text-xs text-stone-500 mt-1 font-medium">Distance Too High</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-stone-500 mb-2 font-bold tracking-wide">
+                                        <span>DISTANCE</span>
+                                        <span id="sim-score" class="text-stone-900 font-mono">--</span>
+                                    </div>
+                                    <div class="h-2 w-full bg-stone-100 rounded-full overflow-hidden relative">
+                                        <div id="sim-bar" class="h-full bg-stone-400 w-0 transition-all duration-300 rounded-full"></div>
+                                    </div>
+                                    <div class="flex justify-between text-[9px] text-stone-400 mt-1.5">
+                                        <span>Far</span>
+                                        <span>Close</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Skill Space (X_l) -> AMBER -->
+                    <div class="w-1/2 p-8 bg-stone-50/30 z-30 overflow-y-auto relative">
+                        
+                        <!-- Sticky Header for Skill Space -->
+                        <div class="flex items-center justify-between mb-8 sticky top-0 bg-white/95 p-4 rounded-xl backdrop-blur-sm z-40 border border-stone-200 shadow-sm">
+                            <div>
+                                <h3 class="font-bold text-stone-800 flex items-center gap-2 text-lg">
+                                    <div class="p-1.5 bg-amber-100 rounded-md text-amber-600"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                                    <span class="math">𝒳<span class="math-sub">l</span></span>
+                                </h3>
+                                <p class="text-[10px] text-stone-500 font-medium mt-0.5">SKILL SPACE</p>
+                            </div>
+                            <span id="skill-count" class="text-xs bg-stone-100 px-3 py-1.5 rounded-full text-stone-600 font-bold border border-stone-200">0 Skills</span>
+                        </div>
+
+                        <div id="skill-list" class="grid grid-cols-1 sm:grid-cols-2 gap-5 pb-10 px-2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Scroll Hint -->
+            <div class="md:hidden text-center text-stone-400 text-xs mt-2 flex items-center justify-center gap-2 animate-pulse">
+                <i data-lucide="arrow-left" class="w-3 h-3"></i>
+                <span>Scroll horizontally to view full pipeline</span>
+                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Modal -->
+    <div id="ai-modal" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center px-4">
+        <div class="bg-white border border-stone-200 rounded-2xl shadow-2xl max-w-md w-full p-8 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+            <button onclick="closeSkillCreator()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-800 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 border border-emerald-100">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-stone-800">Create New Skill</h3>
+                    <p class="text-sm text-stone-500">Generative AI via Gemini API</p>
+                </div>
+            </div>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-stone-500 mb-2 uppercase tracking-wide">Describe behavior</label>
+                    <input type="text" id="ai-prompt" placeholder="e.g., 'Move cautiously like a cat'" 
+                        class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white transition shadow-inner">
+                </div>
+                <button onclick="generateSkillWithGemini()" id="btn-generate" class="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-stone-200 transition flex items-center justify-center gap-2 transform active:scale-95">
+                    <span>Generate <span class="math">z<span class="math-sub">l</span></span></span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; 
+
+        // --- Global State ---
+        let currentPhase = 1;
+        let isScanning = false;
+        let isTaskRunning = false;
+        let cachedBindings = {}; 
+        const SUCCESS_THRESHOLD = 0.8;
+
+        // --- Data ---
+        // Modified distributions to create more variance in distances
+        const subtasks = [
+            { id: 'z1', name: 'Move Fwd', desc: 'Fast & Steady', modes: [{mu: 30, sigma: 10, weight: 1.0}, {mu: 70, sigma: 10, weight: 1.0}] },
+            { id: 'z2', name: 'Turn Right', desc: 'Sharp Arc', modes: [{mu: 50, sigma: 25, weight: 1.2}] },
+            { id: 'z1_2', name: 'Move Fwd', desc: 'Fast & Steady', modes: [{mu: 30, sigma: 10, weight: 1.0}, {mu: 70, sigma: 10, weight: 1.0}] }, 
+            { id: 'z3', name: 'High Jump', desc: 'Vertical Impulse', modes: [{mu: 20, sigma: 10, weight: 0.8}, {mu: 50, sigma: 30, weight: 0.6}] }
+        ];
+
+        const taskSequence = ['z1', 'z2', 'z1_2', 'z3'];
+
+        // Scores are roughly based on overlap. We use distance = (1-score)*5 for visual variety.
+        const initialSkills = [
+            // Very different from z1 (Move Fwd)
+            { id: 's1', name: 'Crawl', tags:['LEGACY'], desc: 'Slow move', type: 'z1', score: 0.15, modes: [{mu: 10, sigma: 20, weight: 0.5}] },
+            // Good match for z2
+            { id: 's2', name: 'Pivot', tags:['LEGACY'], desc: 'Basic turn', type: 'z2', score: 0.85, modes: [{mu: 48, sigma: 28, weight: 1.0}] },
+            // Poor match for z3
+            { id: 's3', name: 'Hop', tags:['LEGACY'], desc: 'Small jump', type: 'z3', score: 0.30, modes: [{mu: 30, sigma: 10, weight: 0.4}] },
+            // Unrelated
+            { id: 's4', name: 'Touch', tags:['LEGACY'], desc: 'Weak contact', type: 'z4', score: 0.10, modes: [{mu: 90, sigma: 10, weight: 0.5}] }
+        ];
+
+        const addedSkills = [
+            // Excellent match for z1
+            { id: 's5', name: 'Sprint', tags:['NEW', 'FAST'], desc: 'Fast run', type: 'z1', score: 0.95, modes: [{mu: 32, sigma: 12, weight: 0.9}, {mu: 68, sigma: 12, weight: 0.9}] },
+            // Good match for z2
+            { id: 's6', name: 'Smooth Turn', tags:['NEW', 'ARC'], desc: 'Arc turn', type: 'z2', score: 0.92, modes: [{mu: 52, sigma: 28, weight: 0.95}] },
+            // Excellent match for z3
+            { id: 's7', name: 'Power Jump', tags:['NEW', 'HIGH'], desc: 'Strong legs', type: 'z3', score: 0.96, modes: [{mu: 22, sigma: 12, weight: 0.8}, {mu: 52, sigma: 28, weight: 0.6}] },
+            // Medium match
+            { id: 's8', name: 'Backflip', tags:['NEW', 'FANCY'], desc: 'Show off', type: 'z3', score: 0.55, modes: [{mu: 15, sigma: 8, weight: 0.6}, {mu: 85, sigma: 8, weight: 0.6}] },
+            { id: 's9', name: 'Precision Push', tags:['NEW', 'EXACT'], desc: 'Robot arm', type: 'z4', score: 0.99, modes: [{mu: 51, sigma: 9, weight: 1.1}] }
+        ];
+
+        let activeSkills = [...initialSkills];
+
+        // --- Elements ---
+        const subtaskListEl = document.getElementById('subtask-list');
+        const skillListEl = document.getElementById('skill-list');
+        const svgEl = document.getElementById('connection-layer');
+        const scannerPanel = document.getElementById('scanner-panel');
+        const validOverlay = document.getElementById('valid-overlay');
+        const invalidOverlay = document.getElementById('invalid-overlay');
+        const invalidReason = document.getElementById('invalid-reason');
+        const canvas = document.getElementById('gaussian-canvas');
+        const taskStepsEl = document.getElementById('task-steps');
+        const btnRunTask = document.getElementById('btn-run-task');
+        
+        // Gemini
+        const aiModal = document.getElementById('ai-modal');
+        const aiPromptInput = document.getElementById('ai-prompt');
+        const generateBtn = document.getElementById('btn-generate');
+        
+        let ctx = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            initCanvas();
+            init();
+        });
+
+        function initCanvas() {
+            if(canvas) {
+                ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+            }
+        }
+
+        function init() {
+            renderSubtasks();
+            renderSkills();
+            renderTaskSteps();
+            updateSkillCount();
+            cachedBindings['z1'] = 's1';
+            cachedBindings['z2'] = 's2';
+            cachedBindings['z3'] = 's3';
+            cachedBindings['z4'] = 's4';
+        }
+
+        function renderSubtasks() {
+            subtaskListEl.innerHTML = '';
+            subtasks.forEach(z => {
+                if(z.id === 'z1_2') return; 
+                
+                const div = document.createElement('div');
+                div.id = `subtask-${z.id}`;
+                div.className = 'node p-4 rounded-xl cursor-pointer relative group transition-all';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="font-bold text-stone-800 text-sm">${z.name}</div>
+                        <i data-lucide="play" class="w-3.5 h-3.5 text-stone-400 group-hover:text-emerald-500 transition"></i>
+                    </div>
+                    <div class="text-xs text-stone-400 font-mono mt-1">${z.desc}</div>
+                    <div class="active-indicator absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-0 bg-emerald-500 transition-all duration-300 rounded-r"></div>
+                `;
+                div.onclick = () => triggerSubtaskLogic(z);
+                subtaskListEl.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function renderSkills() {
+            skillListEl.innerHTML = '';
+            activeSkills.forEach(s => {
+                const div = document.createElement('div');
+                div.id = `skill-${s.id}`;
+                const isNew = addedSkills.some(n => n.id === s.id);
+                const isAI = s.tags.includes('AI');
+                let cardClass = `skill-card p-4 rounded-xl relative overflow-hidden`;
+                if (isAI) cardClass += ` skill-ai`;
+                else if (isNew) cardClass += ` skill-new`;
+                div.className = cardClass;
+                
+                let tagsHtml = s.tags.map(t => {
+                    let color = 'bg-stone-100 text-stone-400';
+                    if(t === 'NEW') color = 'bg-amber-50 text-amber-600 font-bold';
+                    if(t === 'AI') color = 'bg-emerald-50 text-emerald-600 font-bold';
+                    if(t === 'LEGACY') color = 'bg-stone-100 text-stone-400 italic';
+                    return `<span class="text-[9px] px-2 py-0.5 rounded-full border border-transparent ${color}">${t}</span>`;
+                }).join('');
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-stone-800 text-sm">${s.name}</span>
+                        <div class="flex gap-1 flex-wrap justify-end">${tagsHtml}</div>
+                    </div>
+                    <div class="text-xs text-stone-500 mb-3 font-light">${s.desc}</div>
+                    <div class="validation-status flex items-center justify-between text-[10px] font-mono border-t border-stone-100 pt-2 opacity-50 transition-opacity">
+                        <span class="status-text text-stone-400">WAITING</span>
+                        <span class="match-score font-bold text-stone-300">d=--</span>
+                    </div>
+                `;
+                skillListEl.appendChild(div);
+            });
+        }
+
+        function renderTaskSteps() {
+            taskStepsEl.innerHTML = '';
+            taskSequence.forEach((zId, idx) => {
+                const lookupId = zId.startsWith('z1') ? 'z1' : zId;
+                const sub = subtasks.find(s => s.id === lookupId);
+                const div = document.createElement('div');
+                div.id = `step-${idx}`;
+                div.className = 'step-card min-w-[90px] p-3 rounded-lg border border-stone-200 bg-white flex flex-col items-center justify-center gap-1 step-pending shadow-sm';
+                
+                // Add onclick functionality
+                div.onclick = () => runSingleStep(idx);
+                
+                div.innerHTML = `
+                    <div class="text-[9px] font-bold text-stone-300 uppercase tracking-widest">Step ${idx+1}</div>
+                    <div class="text-xs font-bold text-stone-700">${sub.name}</div>
+                    <div class="status-icon mt-1"><i data-lucide="circle" class="w-3 h-3 text-stone-200 fill-current"></i></div>
+                `;
+                taskStepsEl.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+        
+        // --- Single Step Run Logic ---
+        async function runSingleStep(index) {
+            if (isScanning || isTaskRunning) return;
+            isTaskRunning = true; // prevent double clicks
+            
+            const zId = taskSequence[index];
+            const lookupId = zId.startsWith('z1') ? 'z1' : zId;
+            const subtask = subtasks.find(s => s.id === lookupId);
+            const stepCard = document.getElementById(`step-${index}`);
+
+            // UI Feedback
+            stepCard.className = 'step-card min-w-[90px] p-3 rounded-lg border border-amber-200 bg-amber-50 flex flex-col items-center justify-center gap-1 step-running shadow-md';
+            stepCard.querySelector('.status-icon').innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 text-amber-600 animate-spin"></i>`;
+            lucide.createIcons();
+
+            // Run logic
+            const skill = await triggerSubtaskLogic(subtask, true);
+            const isSuccess = skill && skill.score >= SUCCESS_THRESHOLD;
+
+            // Result Feedback
+            if (isSuccess) {
+                stepCard.className = 'step-card min-w-[90px] p-3 rounded-lg border border-emerald-200 bg-emerald-50 flex flex-col items-center justify-center gap-1 step-success shadow-sm';
+                stepCard.querySelector('.status-icon').innerHTML = `<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>`;
+            } else {
+                stepCard.className = 'step-card min-w-[90px] p-3 rounded-lg border border-rose-200 bg-rose-50 flex flex-col items-center justify-center gap-1 step-fail shadow-sm';
+                stepCard.querySelector('.status-icon').innerHTML = `<i data-lucide="x" class="w-3 h-3 text-rose-600"></i>`;
+            }
+            lucide.createIcons();
+            isTaskRunning = false;
+        }
+
+        function updateSkillCount() {
+            document.getElementById('skill-count').innerText = `${activeSkills.length} Skills`;
+        }
+
+        // --- Phase & Interaction ---
+
+        function setPhase(p) {
+            if (isScanning || isTaskRunning) return;
+            currentPhase = p;
+            
+            // Styles
+            const btn1 = document.getElementById('btn-phase-1');
+            const btn2 = document.getElementById('btn-phase-2');
+            
+            if(p === 1) {
+                btn1.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-stone-800 text-white shadow-md";
+                btn2.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all text-stone-400 hover:text-stone-600 flex items-center gap-2";
+            } else {
+                btn1.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all text-stone-400 hover:text-stone-600";
+                btn2.className = "px-6 py-2 rounded-lg text-sm font-bold transition-all bg-amber-500 text-white shadow-md shadow-amber-100 flex items-center gap-2";
+            }
+
+            if (p === 1) activeSkills = [...initialSkills];
+            else activeSkills = [...initialSkills, ...addedSkills];
+            
+            if (p === 1) {
+                cachedBindings = { 'z1': 's1', 'z2': 's2', 'z3': 's3', 'z4': 's4' };
+            }
+
+            renderSkills();
+            renderTaskSteps();
+            resetVisuals();
+            updateSkillCount();
+        }
+
+        function resetSimulation() {
+            if(isScanning || isTaskRunning) return;
+            cachedBindings = { 'z1': 's1', 'z2': 's2', 'z3': 's3', 'z4': 's4' };
+            renderTaskSteps();
+            resetVisuals();
+        }
+
+        function resetVisuals() {
+            svgEl.innerHTML = '';
+            scannerPanel.classList.remove('opacity-100', 'translate-y-0');
+            scannerPanel.classList.add('opacity-0', 'translate-y-4');
+            validOverlay.classList.add('hidden');
+            invalidOverlay.classList.add('hidden');
+            
+            if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            document.querySelectorAll('.skill-card').forEach(el => {
+                el.classList.remove('validating', 'rejected', 'hooked');
+                el.querySelector('.validation-status').style.opacity = '0.3';
+                el.querySelector('.status-text').innerText = 'WAITING';
+                el.querySelector('.status-text').className = 'status-text text-stone-400';
+                el.querySelector('.match-score').innerText = 'd=--';
+                el.querySelector('.match-score').className = 'match-score font-bold text-stone-300';
+            });
+            document.querySelectorAll('.active-indicator').forEach(el => el.style.height = '0');
+        }
+
+        // --- Logic ---
+
+        async function triggerSubtaskLogic(subtask, isTaskMode = false) {
+            if (isScanning) return null;
+
+            const typeKey = subtask.id.startsWith('z1') ? 'z1' : subtask.id;
+            const cachedId = cachedBindings[typeKey];
+            
+            if (cachedId) {
+                const skill = activeSkills.find(s => s.id === cachedId);
+                
+                if (skill) {
+                    if (skill.score >= SUCCESS_THRESHOLD) {
+                        await showValidEffect(subtask, skill);
+                        return skill;
+                    } else {
+                        await showInvalidState(subtask, skill, "High Distance (Legacy Skill)");
+                        const foundSkill = await startHookingProcess(subtask, isTaskMode);
+                        return foundSkill;
+                    }
+                }
+            }
+
+            const foundSkill = await startHookingProcess(subtask, isTaskMode);
+            return foundSkill;
+        }
+
+        async function showValidEffect(subtask, skill) {
+            isScanning = true;
+            resetVisuals();
+            initCanvas(); 
+
+            const domId = subtask.id; 
+            const subEl = document.getElementById(`subtask-${domId}`) || document.getElementById(`subtask-${subtask.id.split('_')[0]}`);
+            if(subEl) subEl.querySelector('.active-indicator').style.height = '100%';
+
+            scannerPanel.classList.remove('opacity-0', 'translate-y-4');
+            scannerPanel.classList.add('opacity-100', 'translate-y-0');
+            validOverlay.classList.remove('hidden');
+            
+            // Update Center Panel with Cached Skill info
+            drawDistributions(subtask.modes, skill.modes, skill.score);
+            const distance = (1 - skill.score) * 5;
+            document.getElementById('sim-score').innerText = distance.toFixed(2);
+            document.getElementById('sim-bar').style.width = `${skill.score * 100}%`;
+            document.getElementById('sim-bar').className = `h-full transition-all duration-200 rounded-full bg-emerald-500`;
+
+            const skillEl = document.getElementById(`skill-${skill.id}`);
+            if(subEl && skillEl) {
+                // Check visibility for mobile before drawing lines (no lines on mobile)
+                if (window.innerWidth >= 768) {
+                    const containerRect = document.querySelector('#demo .relative').getBoundingClientRect();
+                    const startRect = subEl.getBoundingClientRect();
+                    const skillRect = skillEl.getBoundingClientRect();
+                    const startX = startRect.right - containerRect.left;
+                    const startY = startRect.top - containerRect.top + (startRect.height / 2);
+                    const endX = skillRect.left - containerRect.left;
+                    const endY = skillRect.top - containerRect.top + (skillRect.height / 2);
+                    drawLine(startX, startY, endX, endY, '#d97706', false); // Amber (Success/Match color for skill side)
+                }
+                
+                skillEl.classList.add('hooked');
+                skillEl.querySelector('.validation-status').style.opacity = '1';
+                skillEl.querySelector('.status-text').innerText = 'CACHED';
+                skillEl.querySelector('.status-text').className = 'status-text text-amber-600 font-bold';
+                skillEl.querySelector('.match-score').innerText = `d=${distance.toFixed(2)}`;
+                skillEl.querySelector('.match-score').className = 'match-score text-amber-600 font-bold';
+            }
+
+            await new Promise(r => setTimeout(r, 1200));
+            isScanning = false;
+        }
+
+        async function showInvalidState(subtask, currentSkill, reason) {
+            isScanning = true;
+            resetVisuals();
+            initCanvas();
+
+            const domId = subtask.id;
+            const subEl = document.getElementById(`subtask-${domId}`) || document.getElementById(`subtask-${subtask.id.split('_')[0]}`);
+            if(subEl) subEl.querySelector('.active-indicator').style.height = '100%';
+
+            const skillEl = document.getElementById(`skill-${currentSkill.id}`);
+            if(skillEl) skillEl.classList.add('rejected');
+            
+            if(subEl && skillEl) {
+                if (window.innerWidth >= 768) {
+                    const containerRect = document.querySelector('#demo .relative').getBoundingClientRect();
+                    const startRect = subEl.getBoundingClientRect();
+                    const skillRect = skillEl.getBoundingClientRect();
+                    const startX = startRect.right - containerRect.left;
+                    const startY = startRect.top - containerRect.top + (startRect.height / 2);
+                    const endX = skillRect.left - containerRect.left;
+                    const endY = skillRect.top - containerRect.top + (skillRect.height / 2);
+                    const probeLine = drawLine(startX, startY, endX, endY, '#f43f5e', true); // Rose-500 (Fail)
+                    setTimeout(() => probeLine.remove(), 1200);
+                }
+            }
+
+            scannerPanel.classList.remove('opacity-0', 'translate-y-4');
+            scannerPanel.classList.add('opacity-100', 'translate-y-0');
+            
+            invalidOverlay.classList.remove('hidden');
+            invalidReason.innerText = reason;
+            
+            drawDistributions(subtask.modes, currentSkill.modes, currentSkill.score);
+
+            await new Promise(r => setTimeout(r, 1500));
+            
+            invalidOverlay.classList.add('hidden');
+        }
+
+        async function startHookingProcess(subtask, isTaskMode) {
+            document.getElementById('status-badge').innerText = "SEARCHING";
+            document.getElementById('status-badge').className = "px-2.5 py-1 bg-emerald-100 text-emerald-600 text-[10px] rounded-full font-mono font-bold animate-pulse";
+
+            let bestSkill = null;
+            let minDistance = 999;
+
+            const containerRect = document.querySelector('#demo .relative').getBoundingClientRect();
+            const domId = subtask.id;
+            const subEl = document.getElementById(`subtask-${domId}`) || document.getElementById(`subtask-${subtask.id.split('_')[0]}`);
+            const startRect = subEl.getBoundingClientRect();
+            const startX = startRect.right - containerRect.left;
+            const startY = startRect.top - containerRect.top + (startRect.height / 2);
+
+            for (const skill of activeSkills) {
+                const skillEl = document.getElementById(`skill-${skill.id}`);
+                const skillRect = skillEl.getBoundingClientRect();
+                const endX = skillRect.left - containerRect.left;
+                const endY = skillRect.top - containerRect.top + (skillRect.height / 2);
+
+                let probeLine;
+                if (window.innerWidth >= 768) {
+                     probeLine = drawLine(startX, startY, endX, endY, '#a8a29e', true); // Stone-400
+                }
+                
+                skillEl.classList.add('validating');
+                skillEl.querySelector('.validation-status').style.opacity = '1';
+                skillEl.querySelector('.status-text').innerText = 'CHECKING';
+                skillEl.querySelector('.status-text').className = 'status-text text-emerald-500 font-bold';
+
+                const typeKey = subtask.id.startsWith('z1') ? 'z1' : subtask.id;
+                const isTypeMatch = skill.type === typeKey;
+                const score = isTypeMatch ? skill.score : 0.1;
+                const distance = (1 - score) * 5;
+
+                // --- KEY CHANGE: Update distance display on change ---
+                document.getElementById('sim-score').innerText = distance.toFixed(2);
+                document.getElementById('sim-bar').style.width = `${score * 100}%`;
+                document.getElementById('sim-bar').className = `h-full transition-all duration-200 rounded-full ${score > 0.8 ? 'bg-amber-500' : 'bg-rose-500'}`;
+
+                skillEl.querySelector('.match-score').innerText = `d=${distance.toFixed(2)}`;
+                skillEl.querySelector('.match-score').className = 'match-score text-stone-800 font-bold';
+
+                const farModes = skill.modes.map(m => ({...m, mu: m.mu + 60})); 
+                const targetModes = isTypeMatch ? skill.modes : skill.modes.map(m => ({...m, mu: m.mu + 40})); 
+                
+                const duration = 1000; 
+
+                if(!isTaskMode) {
+                    await animateMatching(subtask.modes, farModes, targetModes, score, duration);
+                } else {
+                    drawDistributions(subtask.modes, targetModes, score);
+                    await new Promise(r => setTimeout(r, 300));
+                }
+
+                if (probeLine) probeLine.remove();
+                skillEl.classList.remove('validating');
+
+                if (isTypeMatch) {
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        bestSkill = skill;
+                    }
+                    skillEl.querySelector('.status-text').innerText = 'CANDIDATE';
+                    skillEl.querySelector('.status-text').className = 'status-text text-emerald-600 font-bold';
+                } else {
+                    skillEl.classList.add('rejected');
+                    skillEl.querySelector('.status-text').innerText = 'REJECTED';
+                    skillEl.querySelector('.status-text').className = 'status-text text-stone-400';
+                }
+            }
+
+            if (bestSkill) {
+                const typeKey = subtask.id.startsWith('z1') ? 'z1' : subtask.id;
+                cachedBindings[typeKey] = bestSkill.id;
+
+                const bestEl = document.getElementById(`skill-${bestSkill.id}`);
+                bestEl.classList.remove('rejected');
+                bestEl.classList.add('hooked');
+                bestEl.querySelector('.status-text').innerText = 'HOOKED';
+                bestEl.querySelector('.status-text').className = 'status-text text-amber-600 font-bold';
+                
+                const bestRect = bestEl.getBoundingClientRect();
+                const endX = bestRect.left - containerRect.left;
+                const endY = bestRect.top - containerRect.top + (bestRect.height / 2);
+                
+                if (window.innerWidth >= 768) {
+                    drawLine(startX, startY, endX, endY, '#d97706', false); // Amber-600
+                }
+                drawDistributions(subtask.modes, bestSkill.modes, bestSkill.score);
+                
+                // Update Center panel one last time with best skill info
+                const bestDist = (1 - bestSkill.score) * 5;
+                document.getElementById('sim-score').innerText = bestDist.toFixed(2);
+                document.getElementById('sim-bar').style.width = `${bestSkill.score * 100}%`;
+                document.getElementById('sim-bar').className = `h-full transition-all duration-200 rounded-full ${bestSkill.score > 0.8 ? 'bg-amber-500' : 'bg-rose-500'}`;
+
+                if(!isTaskMode) await new Promise(r => setTimeout(r, 1000));
+            }
+
+            isScanning = false;
+            return bestSkill;
+        }
+
+        async function runTaskSequence() {
+            if (isScanning || isTaskRunning) return;
+            isTaskRunning = true;
+            btnRunTask.disabled = true;
+            btnRunTask.classList.add('opacity-50', 'cursor-not-allowed');
+            renderTaskSteps(); 
+            
+            for (let i = 0; i < taskSequence.length; i++) {
+                const zId = taskSequence[i];
+                const subtask = subtasks.find(s => s.id === zId);
+                const stepCard = document.getElementById(`step-${i}`);
+
+                stepCard.className = 'step-card min-w-[90px] p-3 rounded-lg border border-amber-200 bg-amber-50 flex flex-col items-center justify-center gap-1 step-running shadow-md';
+                stepCard.querySelector('.status-icon').innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 text-amber-600 animate-spin"></i>`;
+                lucide.createIcons();
+
+                const skill = await triggerSubtaskLogic(subtask, true);
+                
+                const isSuccess = skill && skill.score >= SUCCESS_THRESHOLD;
+
+                if (isSuccess) {
+                    stepCard.className = 'step-card min-w-[90px] p-3 rounded-lg border border-emerald-200 bg-emerald-50 flex flex-col items-center justify-center gap-1 step-success shadow-sm';
+                    stepCard.querySelector('.status-icon').innerHTML = `<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>`;
+                    await new Promise(r => setTimeout(r, 500));
+                } else {
+                    stepCard.className = 'step-card min-w-[90px] p-3 rounded-lg border border-rose-200 bg-rose-50 flex flex-col items-center justify-center gap-1 step-fail shadow-sm';
+                    stepCard.querySelector('.status-icon').innerHTML = `<i data-lucide="x" class="w-3 h-3 text-rose-600"></i>`;
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                lucide.createIcons();
+            }
+
+            isTaskRunning = false;
+            btnRunTask.disabled = false;
+            btnRunTask.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // --- Drawing ---
+        function animateMatching(targetFixed, startSkillModes, endSkillModes, finalScore, duration) {
+            return new Promise(resolve => {
+                let start = null;
+                const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+                function step(timestamp) {
+                    if (!start) start = timestamp;
+                    const rawProgress = Math.min((timestamp - start) / duration, 1);
+                    const progress = easeOut(rawProgress);
+                    const currentSkillModes = startSkillModes.map((m, i) => {
+                        const end = endSkillModes[i] || m;
+                        return {
+                            mu: m.mu + (end.mu - m.mu) * progress,
+                            sigma: m.sigma + (end.sigma - m.sigma) * progress,
+                            weight: m.weight + (end.weight - m.weight) * progress
+                        };
+                    });
+                    const distFactor = Math.max(0, 1 - Math.abs(currentSkillModes[0].mu - endSkillModes[0].mu) / 50);
+                    const currentOverlap = distFactor * finalScore * progress;
+                    drawDistributions(targetFixed, currentSkillModes, currentOverlap);
+                    if (rawProgress < 1) window.requestAnimationFrame(step);
+                    else resolve();
+                }
+                window.requestAnimationFrame(step);
+            });
+        }
+
+        function drawDistributions(targetModes, skillModes, overlapScore) {
+            if(!ctx || !canvas) return;
+            const w = canvas.width / (window.devicePixelRatio || 1);
+            const h = canvas.height / (window.devicePixelRatio || 1);
+            ctx.clearRect(0, 0, w, h);
+            
+            const getGaussianSum = (x, modes) => {
+                let ySum = 0;
+                const domainX = (x / w) * 100;
+                modes.forEach(mode => {
+                    const num = Math.exp(-Math.pow(domainX - mode.mu, 2) / (2 * Math.pow(mode.sigma, 2)));
+                    ySum += mode.weight * num;
+                });
+                return ySum; 
+            };
+            const drawCurve = (modes, color, fill) => {
+                ctx.beginPath();
+                let first = true;
+                for (let x = 0; x <= w; x+=3) {
+                    const yVal = getGaussianSum(x, modes);
+                    const screenY = h - 15 - (yVal * (h * 0.5)); 
+                    if (first) ctx.moveTo(x, screenY); else ctx.lineTo(x, screenY);
+                    first = false;
+                }
+                ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
+                if (fill) {
+                    ctx.lineTo(w, h); ctx.lineTo(0, h);
+                    ctx.fillStyle = color.replace('rgb', 'rgba').replace(')', ', 0.1)'); ctx.fill();
+                }
+            };
+            
+            // Use Theme Colors
+            // Target (Subtask): Emerald-600 (rgb(5, 150, 105))
+            // Skill: Amber-600 (rgb(217, 119, 6))
+            
+            if(overlapScore > 0.05) {
+                ctx.beginPath(); let first = true;
+                for (let x = 0; x <= w; x+=3) {
+                    const y1 = getGaussianSum(x, targetModes);
+                    const y2 = getGaussianSum(x, skillModes);
+                    const minY = Math.min(y1, y2); 
+                    const screenY = h - 15 - (minY * (h * 0.5));
+                    if (first) ctx.moveTo(x, screenY); else ctx.lineTo(x, screenY);
+                    first = false;
+                }
+                ctx.lineTo(w, h); ctx.lineTo(0, h);
+                // Intersection: Amber (Match!)
+                ctx.fillStyle = `rgba(217, 119, 6, ${Math.max(0.1, overlapScore * 0.5)})`; ctx.fill();
+            }
+            drawCurve(targetModes, 'rgb(5, 150, 105)', true); // Emerald
+            drawCurve(skillModes, 'rgb(217, 119, 6)', true); // Amber
+        }
+
+        function drawLine(x1, y1, x2, y2, color, isProbe) {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const d = `M ${x1} ${y1} C ${x1 + 50} ${y1}, ${x2 - 50} ${y2}, ${x2} ${y2}`;
+            path.setAttribute("d", d); path.setAttribute("stroke", color); path.setAttribute("stroke-width", isProbe ? "2" : "4"); path.setAttribute("fill", "none");
+            if (isProbe) path.setAttribute("class", "probe-line");
+            else {
+                path.setAttribute("stroke-dasharray", "1000"); path.setAttribute("stroke-dashoffset", "1000");
+                path.style.transition = "stroke-dashoffset 0.5s ease-out";
+                setTimeout(() => path.setAttribute("stroke-dashoffset", "0"), 10);
+            }
+            svgEl.appendChild(path);
+            return path;
+        }
+
+        // --- Gemini Logic ---
+        function openSkillCreator() { aiModal.classList.remove('hidden'); aiPromptInput.focus(); }
+        function closeSkillCreator() { aiModal.classList.add('hidden'); aiPromptInput.value = ''; generateBtn.disabled=false; generateBtn.innerHTML=`<span>Generate <span class="math">z<span class="math-sub">l</span></span></span><i data-lucide="arrow-right" class="w-4 h-4"></i>`; }
+        async function generateSkillWithGemini() {
+            const prompt = aiPromptInput.value.trim();
+            if (!prompt) return;
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Creating...</span>`;
+            lucide.createIcons();
+            try {
+                const systemInstruction = `You are an expert in Reinforcement Learning. Generate a JSON Skill object. ID: unique string, name: short string, desc: short string, tags: array including 'AI', type: one of ['z1','z2','z3','z4'], score: float (0.1-0.99), modes: array of {mu(0-100), sigma(5-35), weight(0.5-1.5)}. z1(30,70), z2(50), z3(40,55), z4(50). Return JSON only.`;
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{parts: [{ text: `User Request: "${prompt}".` }]}], systemInstruction: {parts: [{ text: systemInstruction }]}, generationConfig: {responseMimeType: "application/json"} })
+                });
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                const newSkill = JSON.parse(data.candidates[0].content.parts[0].text);
+                newSkill.id = `s_ai_${Date.now()}`;
+                if (!newSkill.tags.includes('AI')) newSkill.tags.push('AI');
+                activeSkills.push(newSkill);
+                renderSkills(); updateSkillCount(); closeSkillCreator();
+                setTimeout(() => { const el = document.getElementById(`skill-${newSkill.id}`); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
+            } catch (error) {
+                console.error(error);
+                generateBtn.innerHTML = `<span class="text-rose-500">Error</span>`;
+                setTimeout(() => { generateBtn.innerHTML = `<span>Generate <span class="math">z<span class="math-sub">l</span></span></span><i data-lucide="arrow-right" class="w-4 h-4"></i>`; generateBtn.disabled = false; lucide.createIcons(); }, 2000);
+            }
+        }
+
+    </script>
+</body>
+</html>

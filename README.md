@@ -1,4 +1,4 @@
-# [NeurIPS 2025 Spotlight] Policy Compatible Skill Incremental Learning via Lazy Learning Interface
+# [NeurIPS 2025 Spotlight] Policy Compatible Skill Incremental Learning via Lazy Learning Interface (SIL-C)
 
 Official implementation of **SIL-C** (Skill Incremental Learning with Compatibility) framework in the paper. This codebase provides the reference implementation for the continual skill learning framework.
 
@@ -7,7 +7,7 @@ Official implementation of **SIL-C** (Skill Incremental Learning with Compatibil
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-31212/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-\# Skill Incremental Learning \# skill-policy compatibility  \# NeurIPS 2025 Spotlight
+\# Skill Incremental Learning \# skill-policy compatibility  \# NeurIPS 2025 Spotlight \# SIL-C \# SILC
 
 
 > ### See how it works (Demo page) : [https://l2dulgi.github.io/SIL-C/] Poster : [[link](https://neurips.cc/virtual/2025/loc/san-diego/poster/115210)]

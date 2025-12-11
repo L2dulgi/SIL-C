@@ -142,6 +142,10 @@ if [ ! -f "$REQ_FILE" ]; then
     exit 1
 fi
 
+# accept Terms of Service
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
 # Activate environment and install
 eval "$(conda shell.bash hook)"
 conda activate $ENV_NAME

@@ -11,7 +11,7 @@ torchvision==0.23.0
 torchmetrics
 termcolor
 # JAX
-jax[cuda12]==0.8.0
+jax[cuda13]==0.8.0
 # qax==0.4.1
 # jax-lorax==0.3.1
 flax==0.10.7

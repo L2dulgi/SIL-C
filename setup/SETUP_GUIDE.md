@@ -174,6 +174,20 @@ conda activate silgym12
 pip install -e .
 ```
 
+### cuML Import Error (scikit-learn compatibility)
+
+If you see an error like:
+```
+AttributeError: type object 'BaseEstimator' has no attribute '_get_default_requests'
+```
+
+This is a compatibility issue between cuML 25.10 and scikit-learn 1.8.0+. Fix it by downgrading scikit-learn:
+```bash
+conda install -c conda-forge scikit-learn=1.7.2 -y
+```
+
+The cuml.sh script automatically handles this, but if you installed cuML manually, you may need to run this command.
+
 ## Directory Structure
 
 ```

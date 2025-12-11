@@ -132,10 +132,27 @@ echo "Command: conda install -c rapidsai -c conda-forge -c nvidia rapids=25.10 p
 echo ""
 
 # Install RAPIDS with detected versions
-conda install -c rapidsai -c conda-forge -c nvidia \
-    rapids=25.10 \
-    python=$PYTHON_VERSION \
-    cuda-version=$CUDA_VERSION
+if [ "$SKIP_CONFIRM" = true ]; then
+    conda install -c rapidsai -c conda-forge -c nvidia \
+        rapids=25.10 \
+        python=$PYTHON_VERSION \
+        cuda-version=$CUDA_VERSION \
+        -y
+else
+    conda install -c rapidsai -c conda-forge -c nvidia \
+        rapids=25.10 \
+        python=$PYTHON_VERSION \
+        cuda-version=$CUDA_VERSION
+fi
+
+echo ""
+echo "Fixing scikit-learn compatibility..."
+echo ""
+
+# Fix scikit-learn version compatibility issue
+# cuML 25.10 uses BaseEstimator._get_default_requests which was removed in scikit-learn 1.8.0
+# Downgrade to 1.7.x to ensure compatibility
+conda install -c conda-forge scikit-learn=1.7.2 -y
 
 echo ""
 echo "========================================"

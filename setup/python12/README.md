@@ -113,6 +113,7 @@ The script attempts to detect CUDA version in the following order:
 - Compatible with CUDA 11.x and 12.x
 - Python versions 3.9, 3.10, 3.11, 3.12 supported
 - Installation requires conda or mamba
+- **scikit-learn compatibility**: The script automatically downgrades scikit-learn to 1.7.2 because cuML 25.10 uses `BaseEstimator._get_default_requests` which was removed in scikit-learn 1.8.0
 
 ## Related Commands
 

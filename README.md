@@ -290,9 +290,6 @@ python exp/trainer.py --debug --no_eval --env kitchen --sc kitchenem --al ptgm -
 # Custom epochs
 python exp/trainer.py --epoch 3000 --env kitchen --sc kitchenem --al ptgm --ll append16
 
-# With evaluation noise (Gaussian)
-python exp/trainer.py --eval_noise --eval_noise_scale 0.05
-
 # Use Flow decoder (faster; original ddpm decoder)
 python exp/trainer.py --dec fql --env kitchen --sc kitchenem --al lazysi --ll ptgm/s20b4/ptgm/s20b4
 ```
@@ -471,15 +468,8 @@ This work builds upon:
 
 ---
 
-## Quick Links
+## Implementation Note
 
-| Link | Description |
-|------|-------------|
-| [📄 Paper (OpenReview)](https://openreview.net/forum?id=xmYT1JqVpj) | Read the full paper |
-| [📄 Paper (arXiv)](https://arxiv.org/abs/2509.20612) | arXiv preprint |
-| [🚀 Setup Guide](#installation) | Installation instructions |
-| [🎯 Interactive Demo](#-interactive-demo-highly-recommended) | **Recommended!** Visual walkthrough of SIL-C |
-| [⚡ Quick Start](#quick-start) | Get started in 5 minutes |
-| [📖 Trainer Docs](exp/README.md) | Complete trainer documentation |
-| [🔧 Troubleshooting](#troubleshooting) | Common issues and solutions |
-| [💻 Development](#development) | Contributing and development guide |
+> **DDPM Decoder Sampling** (Updated: 2024-12-17): This implementation uses **deterministic sampling** (DDIM-style) by default for the DDPM decoder. Non-deterministic sampling showed lower performance in our experiments. Note that the paper evaluation was conducted with non-deterministic sampling.
+
+---

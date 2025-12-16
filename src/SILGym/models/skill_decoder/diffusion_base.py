@@ -340,7 +340,7 @@ class CondDDPMDecoder(BasicModule):
 
         noise = default(
             repeat_noise,
-            lambda: jax.random.normal(rngs, x.shape),
+            False, # Use DDIM-style deterministic sampling by default
         )
         nonzero_mask = jnp.reshape(
             1 - jnp.equal(t, 0).astype(jnp.float32),

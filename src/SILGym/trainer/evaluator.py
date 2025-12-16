@@ -91,7 +91,7 @@ class SkillEvaluator:
             if self.force_static:
                 # Check the algorithm type to determine the appropriate static agent
                 algo_type = getattr(self.experiment_config, 'algo_type', None)
-                if algo_type in ['lazysi']:
+                if algo_type in ['lazysi' , 'silc']:
                     # TODO: Implement LazySIStaticAgent if needed
                     self.logger.warning(f"Static agent not yet implemented for {algo_type}, using PTGMAgent")
                     self.agent_cls = PTGMAgent
@@ -239,7 +239,7 @@ class SkillEvaluator:
                 self.eval_policy.train_state = self.eval_policy.train_state.replace(
                     params=loaded_policy.train_state.params
                 )
-                if self.experiment_config and self.experiment_config.algo_type in ['lazysi']:
+                if self.experiment_config and self.experiment_config.algo_type in ['lazysi', 'silc']:
                     self.logger.info(f"Loading policy prototype for phase {agent_config['policy'][1]}")
                     self.eval_policy.set_subtask_prototype(loaded_policy.subtask_prototypes)
 

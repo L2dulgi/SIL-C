@@ -494,7 +494,7 @@ class SkillTrainer(BaseTrainer):
         
         self.current_dataloader = self.agent.create_skill_labels(self.current_dataloader)
 
-        if self.experiment_config.algo_type in ['lazysi']:
+        if self.experiment_config.algo_type in ['lazysi', 'silc']:
             self.logger.info(f"Creating policy prototypes for phase {phase}")
             subtask_prototypes = self.interface.create_subtask_prototype(self.current_dataloader)
             self.policy.set_subtask_prototype(subtask_prototypes)
@@ -620,7 +620,7 @@ class SkillTrainer(BaseTrainer):
                 self.eval_policy.train_state = self.eval_policy.train_state.replace(
                     params=loaded_policy.train_state.params
                 )
-                if self.experiment_config.algo_type in ['lazysi']:
+                if self.experiment_config.algo_type in ['lazysi', 'silc']:
                     self.logger.info(f"Loading policy prototype for phase {agent_config['policy'][1]}")
                     self.eval_policy.set_subtask_prototype(loaded_policy.subtask_prototypes)
 

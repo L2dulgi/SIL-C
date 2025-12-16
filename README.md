@@ -11,6 +11,8 @@ Official implementation of **SIL-C** (Skill Incremental Learning with Compatibil
 
 
 > ### See how it works (Demo page) : [https://l2dulgi.github.io/SIL-C/] Poster : [[link](https://neurips.cc/virtual/2025/loc/san-diego/poster/115210)]
+
+> **Changelog (2024-12-17)**: Fixed `silc` algorithm disconnection from trainer/evaluator. Added `trainer.sh` and paper replication scripts (`replicate.sh`). See [Implementation Note](#implementation-note) for performance-critical details.
 ---
 
 ## Overview
@@ -224,13 +226,13 @@ python remoteEnv/multiStageMetaworld/mmworld_server.py  # Port 8888
 # Terminal 2: Training
 conda activate silgym12
 
-# Kitchen with PTGM
+# Kitchen with LazySI (SIL-C in main paper)
 python exp/trainer.py \
   --env kitchen \
   --scenario_type kitchenem \
   --sync_type sync \
-  --algorithm ptgm \
-  --lifelong s20b4/append4 \
+  --algorithm lazysi \
+  --lifelong conf99/ptgm_append4/s20g20b4/ptgm/s20g20b4 \
   --dec ddpm \
   --seed 0
 
@@ -240,7 +242,7 @@ python exp/trainer.py \
   --scenario_type mmworldem \
   --sync_type sync \
   --algorithm lazysi \
-  --lifelong ptgm/s20b4/ptgm/s20b4 \
+  --lifelong conf99/ptgm_append4/s20g20b4/ptgm/s20g20b4 \
   --dec ddpm \
   --dist_type maha \
   --seed 0
@@ -318,7 +320,7 @@ logs/{env}/{scenario}/sync/{algorithm}/{lifelong}/{date}seed{seed}{id}/
 ### Analyzing Results
 
 ```bash
-python src/SILGym/utils/llmetrics.py -e kitchen -g keyword1 keyword2
+python src/SILGym/utils/monitoring/llmetrics.py -e kitchen -g keyword1 keyword2
 ```
 
 This aggregates metrics across runs and reports:
@@ -424,8 +426,6 @@ For more troubleshooting, see [exp/README.md](exp/README.md#tips--troubleshootin
 ---
 
 ## Citation
-
-If you use this codebase in your research, please cite:
 
 ```bibtex
 @inproceedings{lee2025policy,

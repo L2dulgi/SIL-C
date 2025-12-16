@@ -16,6 +16,7 @@ echo ""
 # Parse command line arguments
 LEGACY_MODE=false
 SKIP_CONFIRM=false
+WITH_MUJOCO=false
 WITH_DATASETS=false
 WITH_REMOTE_ENVS=false
 
@@ -27,6 +28,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -y|--yes)
             SKIP_CONFIRM=true
+            shift
+            ;;
+        -m|--with-mujoco)
+            WITH_MUJOCO=true
             shift
             ;;
         -d|--with-datasets)
@@ -43,6 +48,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --legacy               Install legacy environment (Python 3.10.16, silgym)"
             echo "  -y, --yes              Skip confirmation prompts"
+            echo "  -m, --with-mujoco      Install MuJoCo 2.1.0 (requires sudo)"
             echo "  -d, --with-datasets    Download datasets after installation"
             echo "  -r, --with-remote-envs Setup remote evaluation environments"
             echo "  -h, --help             Show this help message"
@@ -59,8 +65,8 @@ while [[ $# -gt 0 ]]; do
             echo "Examples:"
             echo "  $0                      # Install default (Python 3.12)"
             echo "  $0 --legacy             # Install legacy (Python 3.10)"
-            echo "  $0 -y -d -r             # Full setup with datasets and remote envs"
-            echo "  $0 --with-datasets      # Install and download datasets"
+            echo "  $0 -y -m -d -r          # Full setup with MuJoCo, datasets, and remote envs"
+            echo "  $0 --with-mujoco        # Install with MuJoCo"
             exit 0
             ;;
         *)
@@ -77,6 +83,25 @@ if ! command -v conda &> /dev/null; then
     echo "Please install Conda or Miniconda first:"
     echo "  https://docs.conda.io/en/latest/miniconda.html"
     exit 1
+fi
+
+# Step 0: Install MuJoCo (if requested)
+if [ "$WITH_MUJOCO" = true ]; then
+    echo ""
+    echo -e "${BLUE}Step 0: Installing MuJoCo 2.1.0...${NC}"
+    echo ""
+
+    if [ -f "setup/install_mujoco.sh" ]; then
+        chmod +x setup/install_mujoco.sh
+        if [ "$SKIP_CONFIRM" = true ]; then
+            bash setup/install_mujoco.sh -y
+        else
+            bash setup/install_mujoco.sh
+        fi
+    else
+        echo -e "${RED}Error: MuJoCo installation script not found: setup/install_mujoco.sh${NC}"
+        exit 1
+    fi
 fi
 
 # Set configuration based on mode

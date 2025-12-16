@@ -13,6 +13,37 @@ Official implementation of **SIL-C** (Skill Incremental Learning with Compatibil
 > ### See how it works (Demo page) : [https://l2dulgi.github.io/SIL-C/] Poster : [[link](https://neurips.cc/virtual/2025/loc/san-diego/poster/115210)]
 
 > **Changelog (2024-12-17)**: Fixed `silc` algorithm disconnection from trainer/evaluator. Added `trainer.sh` and paper replication scripts (`replicate.sh`). See [Implementation Note](#implementation-note) for performance-critical details.
+
+---
+
+## Quick Start (Table 1 - Kitchen Emergent Skill Incremental Learning Scenario; SIL-C)
+
+
+```bash
+# Install project / MuJoCo / download dataset / setup conda environment
+bash setup.sh -y -m -d -r
+```
+```bash
+# Terminal 1 (evaluation server)
+## setup environment
+conda activate kitchen_eval
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
+export MUJOCO_GL=egl
+
+## run environment server
+python remoteEnv/kitchen/kitchen_server.py 
+
+```
+```bash
+# Terminal 2 (training model, another shell)
+## setup environment
+conda activate silgym12
+export XLA_PYTHON_CLIENT_PREALLOCATE=false
+
+## run experiment
+python exp/trainer.py --algorithm silc --lifelong conf99/ptgm_append4/s20g20b4/ptgm/s20g20b4 --scenario_type kitchenem
+```
 ---
 
 ## Overview
@@ -80,13 +111,15 @@ SILGym/
 - Linux or macOS with **CUDA-capable GPU**
 - [Conda](https://docs.conda.io/en/latest/miniconda.html) 23.5+ or Mambaforge
 - Python 3.12.12 (default) or 3.10.16 (legacy mode)
-- [MuJoCo 2.1.0](https://github.com/google-deepmind/mujoco) installed at `~/.mujoco/mujoco210`
+- MuJoCo 2.1.0 (auto-installed with `setup.sh -m`, or manual install at `~/.mujoco/mujoco210`)
 - NVIDIA driver with EGL rendering support
 - `git`, `gdown`, and build tools (`build-essential`, `cmake`, `patchelf`)
 
 ---
 
 ## Environment Variables
+
+> **Note:** These are automatically configured when using `setup.sh -m`.
 
 Add these to your `~/.bashrc`:
 

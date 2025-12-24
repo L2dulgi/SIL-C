@@ -507,3 +507,15 @@ This work builds upon:
 > **DDPM Decoder Sampling** (Updated: 2024-12-17): This implementation uses **deterministic sampling** (DDIM-style) by default for the DDPM decoder. Non-deterministic sampling showed lower performance in our experiments. Note that the paper evaluation was conducted with non-deterministic sampling.
 
 ---
+
+Cite
+---
+```
+@inproceedings{
+  lee2025policy,
+  title={Policy Compatible Skill Incremental Learning via Lazy Learning Interface},
+  author={Daehee Lee and Dongsu Lee and TaeYoon Kwack and Wonje Choi and Honguk Woo},
+  booktitle={The Thirty-ninth Annual Conference on Neural Information Processing Systems},
+  year={2025},
+}
+```

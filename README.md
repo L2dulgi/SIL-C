@@ -44,6 +44,7 @@ export XLA_PYTHON_CLIENT_PREALLOCATE=false
 ## run experiment
 python exp/trainer.py --algorithm silc --lifelong conf99/ptgm_append4/s20g20b4/ptgm/s20g20b4 --scenario_type kitchenem
 ```
+For detailed reproduction commands (Main Tables, Figures, Appendix), see [exp/reproduce.md](exp/reproduce.md)
 ---
 
 ## Overview

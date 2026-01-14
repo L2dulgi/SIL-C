@@ -151,7 +151,7 @@ if [ "$SKIP_ENV_CREATION" != true ]; then
     echo ""
     echo -e "${BLUE}Step 1: Creating conda environment '$ENV_NAME'...${NC}"
     conda create -n $ENV_NAME python=$PYTHON_VERSION -y
-    echo -e "${GREEN} Environment created${NC}"
+    echo -e "${GREEN}✓ Environment created${NC}"
 else
     echo ""
     echo -e "${BLUE}Step 1: Using existing environment '$ENV_NAME'${NC}"
@@ -173,13 +173,13 @@ conda activate $ENV_NAME
 
 echo "Installing dependencies..."
 pip install -r "$REQ_FILE"
-echo -e "${GREEN} Dependencies installed${NC}"
+echo -e "${GREEN}✓ Dependencies installed${NC}"
 
 # Step 3: Install package in editable mode
 echo ""
 echo -e "${BLUE}Step 3: Installing SILGym package in editable mode...${NC}"
 pip install -e .
-echo -e "${GREEN} Package installed${NC}"
+echo -e "${GREEN}✓ Package installed${NC}"
 
 # Step 4: Install cuML (only for default mode)
 if [ "$INSTALL_CUML" = true ]; then
@@ -202,7 +202,7 @@ if [ "$INSTALL_CUML" = true ]; then
         bash setup/python12/cuml.sh
     fi
 
-    echo -e "${GREEN} cuML installed${NC}"
+    echo -e "${GREEN}✓ cuML installed${NC}"
 fi
 
 # Step 5: Verify installation
@@ -212,18 +212,36 @@ echo -e "${BLUE}Step 5: Verifying installation...${NC}"
 # Check if key packages are importable
 python -c "import jax; import flax; print(f'JAX version: {jax.__version__}'); print(f'Flax version: {flax.__version__}')" 2>/dev/null
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN} JAX and Flax are installed correctly${NC}"
+    echo -e "${GREEN}✓ JAX and Flax are installed correctly${NC}"
 else
-    echo -e "${YELLOW}� Warning: Could not verify JAX/Flax installation${NC}"
+    echo -e "${YELLOW}Warning: Could not verify JAX/Flax installation${NC}"
 fi
 
-# Check cuML only for default mode
+# Check cuML only for default mode (with timeout and auto-fix)
 if [ "$INSTALL_CUML" = true ]; then
-    python -c "import cuml; print(f'cuML version: {cuml.__version__}')" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN} cuML is installed correctly${NC}"
+    echo "Checking cuML installation..."
+    timeout 30 python -c "import cuml; print(f'cuML version: {cuml.__version__}')" 2>&1
+    CUML_EXIT=$?
+    if [ $CUML_EXIT -eq 0 ]; then
+        echo -e "${GREEN}✓ cuML is installed correctly${NC}"
     else
-        echo -e "${YELLOW}� Warning: Could not verify cuML installation${NC}"
+        if [ $CUML_EXIT -eq 124 ]; then
+            echo -e "${YELLOW}cuML verification timed out${NC}"
+        else
+            echo -e "${YELLOW}cuML import failed${NC}"
+        fi
+        echo -e "${BLUE}Attempting automatic fix (forcing scipy to 1.16.3 via pip)...${NC}"
+        pip install scipy==1.16.3 --force-reinstall --no-deps
+        pip install scipy==1.16.3
+
+        # Retry verification
+        echo "Retrying cuML verification..."
+        timeout 30 python -c "import cuml; print(f'cuML version: {cuml.__version__}')" 2>&1
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓ cuML is now working correctly${NC}"
+        else
+            echo -e "${YELLOW}cuML still has issues. Check gpu_check.py output for details.${NC}"
+        fi
     fi
 fi
 

@@ -128,31 +128,34 @@ fi
 
 echo ""
 echo "Installing RAPIDS cuML..."
-echo "Command: conda install -c rapidsai -c conda-forge -c nvidia rapids=25.10 python=$PYTHON_VERSION cuda-version=$CUDA_VERSION"
+echo "Command: conda install -c rapidsai -c conda-forge -c nvidia rapids=25.12 python=$PYTHON_VERSION cuda-version=$CUDA_VERSION"
 echo ""
 
 # Install RAPIDS with detected versions
 if [ "$SKIP_CONFIRM" = true ]; then
     conda install -c rapidsai -c conda-forge -c nvidia \
-        rapids=25.10 \
+        rapids=25.12 \
         python=$PYTHON_VERSION \
         cuda-version=$CUDA_VERSION \
         -y
 else
     conda install -c rapidsai -c conda-forge -c nvidia \
-        rapids=25.10 \
+        rapids=25.12 \
         python=$PYTHON_VERSION \
         cuda-version=$CUDA_VERSION
 fi
 
 echo ""
-echo "Fixing scikit-learn compatibility..."
+echo "Fixing dependency compatibility issues..."
 echo ""
 
-# Fix scikit-learn version compatibility issue
-# cuML 25.10 uses BaseEstimator._get_default_requests which was removed in scikit-learn 1.8.0
-# Downgrade to 1.7.x to ensure compatibility
-conda install -c conda-forge scikit-learn=1.7.2 -y
+# Fix scikit-learn and scipy version compatibility issues
+# - scikit-learn 1.8.0+ removed BaseEstimator._get_default_requests used by cuML
+# - scipy 1.14.x has internal API changes that cause '_spropack' import error
+# Use pip to force install specific versions (conda may have dependency conflicts)
+echo "Fixing scikit-learn to 1.7.2 and scipy to 1.16.3..."
+pip install scikit-learn==1.7.2 scipy==1.16.3 --force-reinstall --no-deps
+pip install scikit-learn==1.7.2 scipy==1.16.3
 
 echo ""
 echo "========================================"

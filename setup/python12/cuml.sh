@@ -152,10 +152,10 @@ echo ""
 # Fix scikit-learn and scipy version compatibility issues
 # - scikit-learn 1.8.0+ removed BaseEstimator._get_default_requests used by cuML
 # - scipy 1.14.x has internal API changes that cause '_spropack' import error
-# Use pip to force install specific versions (conda may have dependency conflicts)
+# NOTE: --force-reinstall handles conda packages without RECORD files
+# NOTE: --no-deps prevents numpy upgrade (numba requires numpy<2.4)
 echo "Fixing scikit-learn to 1.7.2 and scipy to 1.16.3..."
 pip install scikit-learn==1.7.2 scipy==1.16.3 --force-reinstall --no-deps
-pip install scikit-learn==1.7.2 scipy==1.16.3
 
 echo ""
 echo "========================================"

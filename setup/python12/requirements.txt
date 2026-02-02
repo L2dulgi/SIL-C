@@ -1,7 +1,9 @@
 tqdm
 cloudpickle
 einops
-scikit-learn
+# scikit-learn & scipy: managed by cuml.sh (conda) to avoid version conflicts
+# scipy must be pinned here to prevent JAX from upgrading it via pip
+scipy==1.16.3
 umap-learn
 matplotlib
 rich
